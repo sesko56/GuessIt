@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jeu - Hôte</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1729 100%);
+      color: #e0e0e0;
+      text-align: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(155, 89, 182, 0.1) 0%, transparent 50%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 3em;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 30px;
+      text-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
+      animation: titleGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes titleGlow {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+
+    .logo-container {
+      margin-bottom: 30px;
+      animation: slideIn 0.8s ease-out;
+    }
+
+    #logo {
+      max-width: 400px;
+      width: 80%;
+      height: auto;
+      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.4));
+      transition: all 0.3s ease;
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    #logo:hover {
+      filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.6));
+      transform: scale(1.05);
+    }
+
+    h2, h3 {
+      color: #a9cce3;
+      margin: 20px 0;
+    }
+
+    .button-group-start {
+      margin: 30px auto;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    #creer, #rejoindre {
+      padding: 18px 45px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 50px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #creer {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    #rejoindre {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      box-shadow: 0 10px 30px rgba(79, 172, 254, 0.4);
+    }
+
+    #creer::before, #rejoindre::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    #creer:hover::before, #rejoindre:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    #creer:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+    }
+
+    #rejoindre:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(79, 172, 254, 0.6);
+    }
+
+    #creer:active, #rejoindre:active {
+      transform: translateY(-1px);
+    }
+
+    /* Sélection des parties */
+    #selectionParties {
+      display: none;
+      margin: 30px auto;
+      max-width: 900px;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    #selectionParties h2 {
+      font-size: 2em;
+      margin-bottom: 30px;
+      color: #67d4f1;
+    }
+
+    .parties-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .partie-card {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      border-radius: 20px;
+      padding: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .partie-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .partie-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(102, 126, 234, 0.6);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+    }
+
+    .partie-card:hover::before {
+      transform: translateY(0);
+    }
+
+    .partie-card h3 {
+      position: relative;
+      z-index: 1;
+      font-size: 1.5em;
+      margin-bottom: 15px;
+      color: #667eea;
+    }
+
+    .partie-card p {
+      position: relative;
+      z-index: 1;
+      font-size: 1.1em;
+      color: #a9cce3;
+    }
+
+    .btn-retour {
+      padding: 12px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border: 2px solid rgba(102, 126, 234, 0.5);
+      border-radius: 30px;
+      background: transparent;
+      color: #667eea;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+
+    .btn-retour:hover {
+      background: rgba(102, 126, 234, 0.2);
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+
+    #code {
+      font-size: 2em;
+      padding: 20px 40px;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      border-radius: 20px;
+      display: inline-block;
+      box-shadow: 0 8px 25px rgba(30, 60, 114, 0.5);
+      animation: slideIn 0.5s ease-out;
+      margin-bottom: 30px;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    table {
+      margin: 20px auto;
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 80%;
+      max-width: 800px;
+      background: rgba(27, 38, 59, 0.8);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    th, td {
+      padding: 18px;
+      border-bottom: 1px solid rgba(65, 90, 119, 0.3);
+    }
+
+    th {
+      background: linear-gradient(135deg, #415a77 0%, #2c4257 100%);
+      color: #e0e0e0;
+      font-size: 1.1em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    tbody tr {
+      transition: all 0.3s ease;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    tbody tr:hover {
+      background: rgba(65, 90, 119, 0.3);
+      transform: scale(1.02);
+    }
+
+    td {
+      font-size: 1.1em;
+    }
+
+    td .reponse-valide {
+      color: #2ecc71;
+      font-weight: bold;
+      font-size: 1.5em;
+      animation: checkmark 0.5s ease-out;
+    }
+
+    td .reponse-proposition {
+      color: #f39c12;
+      font-weight: bold;
+      font-size: 1.5em;
+      animation: pulse-orange 1.5s ease-in-out infinite;
+    }
+
+    @keyframes checkmark {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.3);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse-orange {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+      }
+    }
+
+    #categorieCourante {
+      font-size: 1.5em;
+      margin-top: 20px;
+      color: #67d4f1;
+      font-weight: bold;
+      padding: 15px 30px;
+      background: rgba(103, 212, 241, 0.1);
+      border-radius: 15px;
+      display: inline-block;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    .button-group {
+      margin: 30px 0;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 15px 35px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #btnMontrer {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+    }
+
+    #btnMontrer:hover {
+      box-shadow: 0 12px 30px rgba(245, 87, 108, 0.6);
+      transform: translateY(-3px);
+    }
+
+    #btnNouvelleManche {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+    }
+
+    #btnNouvelleManche:hover {
+      box-shadow: 0 12px 30px rgba(79, 172, 254, 0.6);
+      transform: translateY(-3px);
+    }
+
+    #btnIndice {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      color: white;
+      box-shadow: 0 8px 20px rgba(250, 112, 154, 0.4);
+    }
+
+    #btnIndice:hover {
+      box-shadow: 0 12px 30px rgba(250, 112, 154, 0.6);
+      transform: translateY(-3px);
+    }
+
+    button:active {
+      transform: translateY(-1px);
+    }
+
+    #indiceAffiche {
+      margin-top: 25px;
+      font-size: 1.3em;
+      color: #fee140;
+      font-style: italic;
+      padding: 15px 30px;
+      background: rgba(250, 112, 154, 0.2);
+      border-radius: 15px;
+      display: inline-block;
+      min-width: 300px;
+      box-shadow: 0 5px 15px rgba(250, 112, 154, 0.3);
+      animation: slideIn 0.5s ease-out;
+    }
+
+    /* Zone de fin de partie */
+    #finPartie {
+      display: none;
+      animation: slideIn 0.8s ease-out;
+    }
+
+    #finPartie h2 {
+      font-size: 3em;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 40px;
+      animation: titleGlow 2s ease-in-out infinite;
+    }
+
+    .podium {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 20px;
+      margin: 40px auto;
+      max-width: 700px;
+    }
+
+    .podium-place {
+      flex: 1;
+      text-align: center;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    .podium-place.first {
+      animation-delay: 0.2s;
+    }
+
+    .podium-place.second {
+      animation-delay: 0s;
+    }
+
+    .podium-place.third {
+      animation-delay: 0.1s;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .podium-block {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 15px 15px 0 0;
+      padding: 20px;
+      margin-top: auto;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .podium-place.first .podium-block {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      height: 200px;
+      box-shadow: 0 15px 40px rgba(245, 87, 108, 0.6);
+    }
+
+    .podium-place.second .podium-block {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      height: 150px;
+      box-shadow: 0 10px 30px rgba(79, 172, 254, 0.5);
+    }
+
+    .podium-place.third .podium-block {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      height: 120px;
+      box-shadow: 0 10px 30px rgba(250, 112, 154, 0.5);
+    }
+
+    .podium-rank {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .podium-place.first .podium-rank {
+      font-size: 3em;
+    }
+
+    .podium-name {
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .podium-score {
+      font-size: 1.5em;
+      color: #fee140;
+    }
+
+    .autres-joueurs {
+      max-width: 600px;
+      margin: 40px auto;
+    }
+
+    .autres-joueurs h3 {
+      margin-bottom: 20px;
+    }
+
+    .joueur-ligne {
+      background: rgba(27, 38, 59, 0.6);
+      padding: 15px 25px;
+      margin: 10px 0;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .joueur-ligne .rank {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #667eea;
+      min-width: 50px;
+    }
+
+    .joueur-ligne .name {
+      flex: 1;
+      font-size: 1.2em;
+    }
+
+    .joueur-ligne .score {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #fee140;
+    }
+
+    .btn-nouvelle-partie {
+      padding: 18px 45px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 40px;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-nouvelle-partie:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+    }
+      #logo {
+        max-width: 280px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .button-group-start {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #creer, #rejoindre {
+        width: 80%;
+        max-width: 300px;
+      }
+
+      .parties-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      table {
+        width: 95%;
+      }
+      
+      .button-group {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      button {
+        width: 80%;
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-container">
+      <img id="logo" src="logo.png" alt="Logo du jeu">
+    </div>
+    
+    <!-- Écran d'accueil -->
+    <div id="accueil">
+      <div class="button-group-start">
+        <button id="creer">✨ Créer une partie</button>
+        <button id="rejoindre">🎮 Rejoindre une partie</button>
+      </div>
+    </div>
+
+    <!-- Sélection des parties thématiques -->
+    <div id="selectionParties">
+      <h2>🎯 Choisissez votre partie</h2>
+      <div class="parties-grid" id="partiesGrid"></div>
+      <button class="btn-retour" id="btnRetour">← Retour</button>
+    </div>
+
+    <!-- Zone de jeu -->
+    <div id="zoneJeu" style="display:none;">
+      <h2 id="code"></h2>
+
+      <p id="categorieCourante"></p>
+
+      <h3>👥 Joueurs et réponses :</h3>
+      <table id="tableJoueurs">
+        <thead>
+          <tr>
+            <th>Pseudo</th>
+            <th>Réponse</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="button-group">
+        <button id="btnMontrer">👁️ Montrer les réponses</button>
+        <button id="btnNouvelleManche">🔄 Mot suivant</button>
+        <button id="btnIndice">💡 Indice suivant</button>
+      </div>
+      <p id="indiceAffiche"></p>
+    </div>
+
+    <!-- Écran de fin de partie -->
+    <div id="finPartie">
+      <h2>🎉 Partie Terminée ! 🎉</h2>
+      
+      <div class="podium" id="podium"></div>
+      
+      <div class="autres-joueurs" id="autresJoueurs"></div>
+
+      <button class="btn-nouvelle-partie" id="btnNouvellePartie">🔄 Nouvelle Partie</button>
+    </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const accueil = document.getElementById("accueil");
+    const selectionParties = document.getElementById("selectionParties");
+    const zoneJeu = document.getElementById("zoneJeu");
+    const finPartie = document.getElementById("finPartie");
+    const btnCreer = document.getElementById("creer");
+    const btnRejoindre = document.getElementById("rejoindre");
+    const btnRetour = document.getElementById("btnRetour");
+    const btnNouvellePartie = document.getElementById("btnNouvellePartie");
+    const partiesGrid = document.getElementById("partiesGrid");
+    const podium = document.getElementById("podium");
+    const autresJoueurs = document.getElementById("autresJoueurs");
+    const codeElem = document.getElementById("code");
+    const tableBody = document.querySelector("#tableJoueurs tbody");
+    const btnMontrer = document.getElementById("btnMontrer");
+    const btnNouvelleManche = document.getElementById("btnNouvelleManche");
+    const btnIndice = document.getElementById("btnIndice");
+    const indiceAffiche = document.getElementById("indiceAffiche");
+    const categorieCourante = document.getElementById("categorieCourante");
+
+    let codePartie = "";
+    let partiesDisponibles = [];
+
+    // Demander la liste des parties au chargement
+    socket.emit("getPartiesDisponibles");
+
+    // Recevoir la liste des parties
+    socket.on("partiesDisponibles", (parties) => {
+      partiesDisponibles = parties;
+    });
+
+    // Afficher les parties disponibles
+    btnCreer.onclick = () => {
+      accueil.style.display = "none";
+      selectionParties.style.display = "block";
+      
+      partiesGrid.innerHTML = partiesDisponibles
+        .map(partie => `
+          <div class="partie-card" data-id="${partie.id}">
+            <h3>${partie.nom}</h3>
+            <p>📝 ${partie.nbQuestions} questions</p>
+          </div>
+        `)
+        .join("");
+
+      // Ajouter les événements de clic
+      document.querySelectorAll(".partie-card").forEach(card => {
+        card.onclick = () => {
+          const partieId = card.getAttribute("data-id");
+          socket.emit("creerPartie", partieId);
+        };
+      });
+    };
+
+    // Retour à l'accueil
+    btnRetour.onclick = () => {
+      selectionParties.style.display = "none";
+      accueil.style.display = "block";
+    };
+
+    // Rejoindre une partie (redirection vers la page joueur)
+    btnRejoindre.onclick = () => {
+      window.location.href = "joueur.html";
+    };
+
+    // Réception du code
+    socket.on("partieCreee", (data) => {
+      codePartie = data.code;
+      selectionParties.style.display = "none";
+      zoneJeu.style.display = "block";
+      codeElem.textContent = `Code de la partie : ${data.code} - ${data.nom}`;
+    });
+
+    // Mise à jour des joueurs
+    socket.on("joueursMaj", (joueurs) => {
+      tableBody.innerHTML = joueurs
+        .map(j => `<tr>
+                    <td>${j.pseudo}</td>
+                    <td>${
+                      j.reponse === 'V' 
+                        ? '<span class="reponse-valide">V</span>' 
+                        : j.reponse === 'O' 
+                          ? '<span class="reponse-proposition">O</span>'
+                          : '...'
+                    }</td>
+                    <td>${j.score || 0}</td>
+                  </tr>`)
+        .join("");
+    });
+
+    // Mise à jour des réponses avec mot final
+    socket.on("majReponses", (data) => {
+      const joueurs = data.joueurs || [];
+      const motFinal = data.motFinal || null;
+
+      tableBody.innerHTML = joueurs
+        .map(j => `<tr>
+                    <td>${j.pseudo}</td>
+                    <td>${j.reponse || '...'}</td>
+                    <td>${j.score || 0}</td>
+                  </tr>`)
+        .join("");
+
+      if (motFinal) {
+        indiceAffiche.textContent = "🏆 Mot final : " + motFinal;
+      }
+    });
+
+    // Nouveau mot
+    socket.on("nouveauMot", ({ categorie }) => {
+      categorieCourante.textContent = "📂 Catégorie : " + categorie;
+      indiceAffiche.textContent = "";
+    });
+
+    // Nouvel indice
+    socket.on("nouvelIndice", (motIndice) => {
+      indiceAffiche.textContent = "💡 Indice : " + motIndice;
+    });
+
+    // Bouton "Montrer les réponses"
+    btnMontrer.onclick = () => {
+      socket.emit("montrerReponses", codePartie);
+    };
+
+    // Bouton "Mot suivant"
+    btnNouvelleManche.onclick = () => {
+      socket.emit("motSuivant", codePartie);
+    };
+
+    // Bouton "Indice suivant"
+    btnIndice.onclick = () => {
+      socket.emit("indiceSuivant", codePartie);
+    };
+
+    // Réception de la fin de partie
+    socket.on("partieTerminee", (joueurs) => {
+      zoneJeu.style.display = "none";
+      finPartie.style.display = "block";
+
+      // Afficher le podium (3 premiers)
+      const top3 = joueurs.slice(0, 3);
+      const medailles = ['🥇', '🥈', '🥉'];
+      const positions = ['first', 'second', 'third'];
+      
+      // Réorganiser pour avoir 2e, 1er, 3e (effet podium)
+      const podiumOrder = top3.length >= 2 ? [top3[1], top3[0], top3[2]] : top3;
+      
+      podium.innerHTML = podiumOrder
+        .filter(j => j) // Enlever les undefined si moins de 3 joueurs
+        .map((j, idx) => {
+          // Trouver la vraie position
+          const realIdx = top3.indexOf(j);
+          return `
+            <div class="podium-place ${positions[realIdx]}">
+              <div class="podium-rank">${medailles[realIdx]}</div>
+              <div class="podium-name">${j.pseudo}</div>
+              <div class="podium-score">${j.score} pts</div>
+              <div class="podium-block"></div>
+            </div>
+          `;
+        })
+        .join("");
+
+      // Afficher les autres joueurs (à partir du 4e)
+      if (joueurs.length > 3) {
+        autresJoueurs.innerHTML = `
+          <h3>🎖️ Autres joueurs</h3>
+          ${joueurs.slice(3).map((j, idx) => `
+            <div class="joueur-ligne">
+              <span class="rank">#${idx + 4}</span>
+              <span class="name">${j.pseudo}</span>
+              <span class="score">${j.score} pts</span>
+            </div>
+          `).join('')}
+        `;
+      } else {
+        autresJoueurs.innerHTML = '';
+      }
+    });
+
+    // Bouton "Nouvelle Partie"
+    btnNouvellePartie.onclick = () => {
+      finPartie.style.display = "none";
+      accueil.style.display = "block";
+      codePartie = "";
+      indiceAffiche.textContent = "";
+      categorieCourante.textContent = "";
+      tableBody.innerHTML = "";
+    };
+  </script>
+</body>
+</html>
